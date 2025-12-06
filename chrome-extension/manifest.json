@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Swipe Session Cookie Helper",
+  "version": "0.1.0",
+  "description": "Grab your ClickUp session cookies so you can call the private API directly.",
+  "action": {
+    "default_title": "Get ClickUp session cookie",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "cookies",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://app.clickup.com/*",
+    "https://*.clickup.com/*"
+  ]
+}
+

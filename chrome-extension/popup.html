@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swipe Cookie Helper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div>
+        <h1>Swipe Cookie Helper</h1>
+        <p class="subtitle">Extract ClickUp session cookies for the private API.</p>
+      </div>
+      <button id="refresh" class="btn secondary">Refresh</button>
+    </header>
+
+    <section class="card">
+      <div class="card-title">
+        <div>
+          <h2>Cookie header</h2>
+          <p class="small">Paste this as your Authorization/session header.</p>
+        </div>
+        <button id="copy-header" class="btn primary">Copy header</button>
+      </div>
+      <textarea id="header-value" readonly spellcheck="false"></textarea>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <h2>Individual cookies</h2>
+        <p class="small">Most likely names: token, auth_token, sid.</p>
+      </div>
+      <div id="cookie-list" class="cookie-list"></div>
+    </section>
+
+    <p id="status" class="status">Ready.</p>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
+
