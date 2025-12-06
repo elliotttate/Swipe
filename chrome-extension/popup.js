@@ -1,11 +1,11 @@
 const statusEl = document.getElementById('status');
-const headerEl = document.getElementById('header-value');
-const cookieListEl = document.getElementById('cookie-list');
+const tokenEl = document.getElementById('token-value');
+const tokenInfoEl = document.getElementById('token-info');
 const refreshBtn = document.getElementById('refresh');
-const copyHeaderBtn = document.getElementById('copy-header');
+const copyTokenBtn = document.getElementById('copy-token');
 
-refreshBtn.addEventListener('click', loadCookies);
-copyHeaderBtn.addEventListener('click', () => copyText(headerEl.value));
+refreshBtn.addEventListener('click', loadToken);
+copyTokenBtn.addEventListener('click', () => copyText(tokenEl.value));
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -19,62 +19,68 @@ function copyText(text) {
   }
 
   navigator.clipboard.writeText(text)
-    .then(() => setStatus('Copied to clipboard.'))
+    .then(() => setStatus('✓ Token copied to clipboard!'))
     .catch(() => setStatus('Clipboard blocked by browser.', true));
 }
 
-function renderCookies(data) {
-  const { cookies = [], cookieHeader = '', error } = data || {};
+function renderToken(data) {
+  const { token, tokenInfo, error } = data || {};
 
   if (error) {
     setStatus(error, true);
+    tokenEl.value = '';
+    tokenInfoEl.innerHTML = '<p class="error">Not logged in or token not found.</p>';
     return;
   }
 
-  headerEl.value = cookieHeader;
-  cookieListEl.innerHTML = '';
+  tokenEl.value = token;
 
-  if (!cookies.length) {
-    const empty = document.createElement('p');
-    empty.className = 'small';
-    empty.textContent = 'No ClickUp cookies were found. Make sure you are logged in at https://app.clickup.com and refresh.';
-    cookieListEl.appendChild(empty);
-    setStatus('No cookies yet.');
-    return;
+  // Show token info
+  if (tokenInfo) {
+    const expiryClass = tokenInfo.isExpired ? 'error' : 
+                        (tokenInfo.hoursUntilExpiry < 6 ? 'warning' : 'success');
+    
+    const expiryText = tokenInfo.isExpired ? '❌ EXPIRED' :
+                       tokenInfo.hoursUntilExpiry <= 0 ? '⚠️ Expires soon!' :
+                       `✓ Valid for ~${tokenInfo.hoursUntilExpiry} hours`;
+
+    tokenInfoEl.innerHTML = `
+      <div class="info-row">
+        <span class="label">User ID:</span>
+        <span class="value">${tokenInfo.userId}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Expires:</span>
+        <span class="value ${expiryClass}">${tokenInfo.expiresAt?.toLocaleString() || 'Unknown'}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Status:</span>
+        <span class="value ${expiryClass}">${expiryText}</span>
+      </div>
+    `;
+
+    if (tokenInfo.isExpired) {
+      setStatus('Token expired! Log into ClickUp to refresh.', true);
+    } else {
+      setStatus('Token ready to copy.');
+    }
+  } else {
+    tokenInfoEl.innerHTML = '<p>Token found but could not parse details.</p>';
+    setStatus('Token found.');
   }
-
-  cookies.forEach((cookie) => {
-    const row = document.createElement('div');
-    row.className = 'cookie-row';
-
-    const text = document.createElement('div');
-    text.className = 'cookie-text';
-    text.textContent = `${cookie.name}=${cookie.value}`;
-
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'btn tertiary';
-    copyBtn.textContent = 'Copy';
-    copyBtn.addEventListener('click', () => copyText(`${cookie.name}=${cookie.value}`));
-
-    row.appendChild(text);
-    row.appendChild(copyBtn);
-    cookieListEl.appendChild(row);
-  });
-
-  setStatus(`Found ${cookies.length} cookies.`);
 }
 
-function loadCookies() {
-  setStatus('Reading cookies…');
-  chrome.runtime.sendMessage({ type: 'GET_COOKIES' }, (response) => {
+function loadToken() {
+  setStatus('Reading token…');
+  chrome.runtime.sendMessage({ type: 'GET_TOKEN' }, (response) => {
     if (chrome.runtime.lastError) {
       setStatus(chrome.runtime.lastError.message, true);
       return;
     }
-    renderCookies(response);
+    renderToken(response);
   });
 }
 
 // Initial load on open.
-loadCookies();
+loadToken();
 

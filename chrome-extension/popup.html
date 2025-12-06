@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swipe Cookie Helper</title>
+  <title>ClickUp Token</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main class="container">
     <header class="header">
       <div>
-        <h1>Swipe Cookie Helper</h1>
-        <p class="subtitle">Extract ClickUp session cookies for the private API.</p>
+        <h1>ClickUp Token</h1>
+        <p class="subtitle">Get your cu_jwt token for API access</p>
       </div>
       <button id="refresh" class="btn secondary">Refresh</button>
     </header>
@@ -19,20 +19,21 @@
     <section class="card">
       <div class="card-title">
         <div>
-          <h2>Cookie header</h2>
-          <p class="small">Paste this as your Authorization/session header.</p>
+          <h2>API Token (cu_jwt)</h2>
+          <p class="small">Copy this to API/config.js</p>
         </div>
-        <button id="copy-header" class="btn primary">Copy header</button>
+        <button id="copy-token" class="btn primary">Copy Token</button>
       </div>
-      <textarea id="header-value" readonly spellcheck="false"></textarea>
+      <textarea id="token-value" readonly spellcheck="false" placeholder="Token will appear here..."></textarea>
     </section>
 
     <section class="card">
       <div class="card-title">
-        <h2>Individual cookies</h2>
-        <p class="small">Most likely names: token, auth_token, sid.</p>
+        <h2>Token Info</h2>
       </div>
-      <div id="cookie-list" class="cookie-list"></div>
+      <div id="token-info" class="token-info">
+        <p class="small">Loading...</p>
+      </div>
     </section>
 
     <p id="status" class="status">Ready.</p>

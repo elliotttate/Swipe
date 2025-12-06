@@ -95,28 +95,46 @@ textarea {
   resize: vertical;
 }
 
-.cookie-list {
+.token-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
 }
 
-.cookie-row {
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.cookie-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  color: #6b7280;
   font-size: 12px;
-  word-break: break-all;
+}
+
+.info-row .value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.info-row .value.success {
+  color: #059669;
+}
+
+.info-row .value.warning {
+  color: #d97706;
+}
+
+.info-row .value.error {
+  color: #dc2626;
 }
 
 .status {

@@ -1,50 +1,73 @@
-const CLICKUP_DOMAINS = [
-  'app.clickup.com',
-  '.app.clickup.com',
-  'clickup.com',
-  '.clickup.com'
-];
+const CLICKUP_DOMAIN = 'app.clickup.com';
+
+// The specific cookie we need for API authentication
+const TARGET_COOKIE = 'cu_jwt';
 
 /**
- * Collect cookies for the configured domains and return a header-friendly string.
+ * Get the cu_jwt token from ClickUp cookies.
+ * This is the only cookie needed for API authentication.
  */
-async function collectCookies() {
-  const collected = [];
+async function getAuthToken() {
+  try {
+    // Get the specific cu_jwt cookie
+    const cookie = await chrome.cookies.get({
+      url: `https://${CLICKUP_DOMAIN}`,
+      name: TARGET_COOKIE
+    });
 
-  for (const domain of CLICKUP_DOMAINS) {
-    try {
-      const cookies = await chrome.cookies.getAll({ domain });
-      collected.push(...cookies);
-    } catch (error) {
-      // Ignore domains we cannot read (user may not be logged in for all).
-      console.warn(`Cookie fetch failed for ${domain}:`, error);
+    if (!cookie) {
+      return { 
+        token: null, 
+        error: 'cu_jwt cookie not found. Make sure you are logged into ClickUp.',
+        tokenInfo: null
+      };
     }
+
+    // Parse the JWT to get expiration info
+    const tokenInfo = parseJwt(cookie.value);
+
+    return { 
+      token: cookie.value,
+      tokenInfo,
+      error: null
+    };
+  } catch (error) {
+    return { 
+      token: null, 
+      error: error?.message || 'Failed to read cookies',
+      tokenInfo: null
+    };
   }
+}
 
-  // Deduplicate by name, preferring the cookie with the latest expiration date.
-  const latestByName = {};
-  for (const cookie of collected) {
-    const existing = latestByName[cookie.name];
-    const expires = cookie.expirationDate || 0;
-    const existingExpires = existing?.expirationDate || 0;
-    if (!existing || expires >= existingExpires) {
-      latestByName[cookie.name] = cookie;
-    }
+/**
+ * Parse JWT payload to extract useful info
+ */
+function parseJwt(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    
+    const payload = JSON.parse(atob(parts[1]));
+    const expDate = payload.exp ? new Date(payload.exp * 1000) : null;
+    const now = new Date();
+    
+    return {
+      userId: payload.user,
+      workspaceKey: payload.ws_key,
+      issuedAt: payload.iat ? new Date(payload.iat * 1000) : null,
+      expiresAt: expDate,
+      isExpired: expDate ? now > expDate : false,
+      hoursUntilExpiry: expDate ? Math.round((expDate - now) / (1000 * 60 * 60)) : null,
+    };
+  } catch (e) {
+    return null;
   }
-
-  const cookies = Object.values(latestByName).sort((a, b) => {
-    const aExp = a.expirationDate || 0;
-    const bExp = b.expirationDate || 0;
-    return bExp - aExp;
-  });
-
-  const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
-  return { cookies, cookieHeader };
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type === 'GET_COOKIES') {
-    collectCookies()
+  if (message?.type === 'GET_TOKEN') {
+    getAuthToken()
       .then((result) => sendResponse(result))
       .catch((error) => sendResponse({ error: error?.message || 'Unknown error' }));
     return true; // Keep the message channel open for async response.
