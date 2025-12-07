@@ -126,13 +126,18 @@ function createCardElement(notification, index) {
   const timeAgo = formatDate(notification.date || notification.date_updated);
   const space = notification.space || '';
   const list = notification.list || '';
+  const actorName = notification.actor_name || '';
+
+  // Build action text like "Jasmine Uniza assigned this task to you"
+  const actionText = actorName ? getActionText(notification.type, actorName) : '';
 
   card.innerHTML = `
     <div class="card-header">
       <div class="card-title">${escapeHtml(title)}</div>
       <span class="card-type">${escapeHtml(type)}</span>
     </div>
-    <div class="card-description">${escapeHtml(description)}</div>
+    ${actionText ? `<div class="card-action">${escapeHtml(actionText)}</div>` : ''}
+    ${description ? `<div class="card-description">${escapeHtml(description)}</div>` : ''}
     <div class="card-meta">
       ${timeAgo ? `<span class="card-meta-item">${timeAgo}</span>` : ''}
       ${space ? `<span class="card-meta-item"><span class="dot"></span>${escapeHtml(space)}</span>` : ''}
@@ -141,6 +146,18 @@ function createCardElement(notification, index) {
   `;
 
   return card;
+}
+
+function getActionText(type, actorName) {
+  const actions = {
+    'assignee_add': `${actorName} assigned this task to you`,
+    'comment': `${actorName} commented`,
+    'task_created': `${actorName} created this task`,
+    'status_change': `${actorName} changed the status`,
+    'due_date_missed': 'Due date missed',
+    'messages': `${actorName} sent a message`
+  };
+  return actions[type] || (actorName ? `${actorName}` : '');
 }
 
 function escapeHtml(text) {
@@ -398,10 +415,10 @@ async function fetchInbox() {
               },
               pagination: {
                 nextCursor: cursor || '',
-                limit: 50  // Increased from 20
+                limit: 50
               },
               sortedBy: { direction: 'descending' },
-              needsMemberMap: false
+              needsMemberMap: true  // Get user names for "assigned by" info
             };
 
             const url = `https://frontdoor-prod-us-west-2-2.clickup.com/inbox/v3/workspaces/${wsId}/notifications/bundles/search`;
@@ -440,6 +457,8 @@ async function fetchInbox() {
 
             const groups = data.notificationBundleGroups || [];
             const resources = data.resources || [];
+            const memberMap = data.memberMap || {};  // User ID -> user info mapping
+            console.log('[Swipe] MemberMap keys:', Object.keys(memberMap).length, 'users loaded');
 
             for (const group of groups) {
               const bundles = group.notificationBundles || [];
@@ -457,6 +476,11 @@ async function fetchInbox() {
                 }
 
                 const notifType = bundle.previewNotification?.type || bundle.bundleType || '';
+
+                // Get actor info from member map
+                const actorId = bundle.previewNotification?.historyItem?.actorId;
+                const actor = actorId ? memberMap[actorId] : null;
+                const actorName = actor?.username || actor?.name || '';
 
                 // Extract string values from location objects
                 const spaceName = taskResource?.location?.project?.name || taskResource?.location?.project || '';
@@ -476,6 +500,7 @@ async function fetchInbox() {
                   unread: bundle.unreadCount > 0,
                   date: bundle.previewNotification?.historyItem?.occurredAt || bundle.mostRecentNotificationTime,
                   type: notifType,
+                  actor_name: actorName,
                   url: taskResource?.id ? `https://app.clickup.com/t/${taskResource.id}` : null
                 });
               }

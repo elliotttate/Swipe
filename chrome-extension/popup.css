@@ -203,6 +203,13 @@ h1 {
   white-space: nowrap;
 }
 
+.card-action {
+  font-size: 13px;
+  color: #818cf8;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
 .card-description {
   font-size: 13px;
   color: #a1a1aa;
@@ -210,7 +217,7 @@ h1 {
   flex: 1;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
