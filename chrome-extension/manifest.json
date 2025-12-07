@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Swipe Session Cookie Helper",
-  "version": "0.1.0",
-  "description": "Grab your ClickUp session cookies so you can call the private API directly.",
+  "name": "Swipe for ClickUp",
+  "version": "0.3.0",
+  "description": "Sync your ClickUp inbox to Swipe for quick task triage.",
   "action": {
-    "default_title": "Get ClickUp session cookie",
+    "default_title": "Sync ClickUp Inbox to Swipe",
     "default_popup": "popup.html"
   },
   "background": {
@@ -14,11 +14,16 @@
   "permissions": [
     "cookies",
     "tabs",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "https://app.clickup.com/*",
-    "https://*.clickup.com/*"
-  ]
+    "https://*.clickup.com/*",
+    "http://localhost:*/*"
+  ],
+  "externally_connectable": {
+    "matches": ["http://localhost:*/*"]
+  }
 }
 

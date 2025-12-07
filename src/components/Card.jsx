@@ -47,7 +47,12 @@ const Card = ({ notification, drag, onVote, index }) => {
   const formattedDate = useMemo(() => {
     const timestamp = notification.date_updated || notification.date;
     if (!timestamp) return '';
-    const date = new Date(parseInt(timestamp));
+    // Handle both ISO strings and numeric timestamps
+    const date = typeof timestamp === 'string' && timestamp.includes('T')
+      ? new Date(timestamp)
+      : new Date(parseInt(timestamp));
+    if (isNaN(date.getTime())) return '';
+
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);

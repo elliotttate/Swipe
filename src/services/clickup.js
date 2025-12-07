@@ -2,7 +2,23 @@ import axios from 'axios';
 
 // Use backend proxy for OAuth endpoints, direct API for personal tokens
 const API_URL = 'https://api.clickup.com/api/v2';
+const PRIVATE_API_URL = 'https://app.clickup.com/api/v1';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
+/**
+ * Check if token is a JWT session token (cu_jwt)
+ */
+const isSessionToken = (token) => {
+  try {
+    if (token && token.split('.').length === 3) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.session_token === true || payload.ws_key !== undefined;
+    }
+  } catch (e) {
+    // Not a JWT
+  }
+  return false;
+};
 
 /**
  * Check if token is OAuth (starts with different prefix) or personal API token
@@ -10,6 +26,75 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 const isOAuthToken = (token) => {
   // OAuth tokens typically don't start with 'pk_'
   return token && !token.startsWith('pk_');
+};
+
+/**
+ * Fetch inbox items using session JWT token (private API)
+ */
+const fetchInboxViaSessionToken = async (token) => {
+  try {
+    console.log('Fetching inbox via session JWT token (private API)...');
+
+    // Fetch all pages of inbox items
+    let allNotifications = [];
+    let page = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await axios.get(`${PRIVATE_API_URL}/inbox`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        params: { page }
+      });
+
+      const notifications = response.data.notifications || response.data.inbox || response.data || [];
+      console.log(`Page ${page}: got ${Array.isArray(notifications) ? notifications.length : 0} items`);
+
+      if (Array.isArray(notifications) && notifications.length > 0) {
+        allNotifications.push(...notifications);
+        page++;
+        // ClickUp typically returns 100 items per page - if less, we're done
+        if (notifications.length < 100) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    console.log(`Total inbox items fetched: ${allNotifications.length}`);
+
+    // Transform to consistent format
+    return allNotifications.map(notification => {
+      const task = notification.task || notification;
+      return {
+        id: notification.id || task.id,
+        task_id: task.id,
+        name: task.name || notification.hist_value || notification.action_type || 'Notification',
+        description: getNotificationDescription(notification, task),
+        status: task.status,
+        priority: task.priority,
+        due_date: task.due_date,
+        assignees: task.assignees,
+        list: task.list,
+        folder: task.folder,
+        space: task.space,
+        unread: notification.unread !== false,
+        seen: notification.seen,
+        date: notification.date,
+        date_updated: task.date_updated || notification.date,
+        type: notification.type || notification.action_type,
+        action_by: notification.user || notification.initiator,
+        url: task.url,
+        raw: notification
+      };
+    });
+  } catch (error) {
+    console.error('Session JWT fetch failed:', error);
+    throw error;
+  }
 };
 
 /**
@@ -165,10 +250,13 @@ const fetchTasksPersonalToken = async (token) => {
 };
 
 /**
- * Main function to fetch inbox items - uses OAuth or personal token
+ * Main function to fetch inbox items - uses session JWT, OAuth, or personal token
  */
 export const getInboxNotifications = async (token) => {
-  if (isOAuthToken(token)) {
+  if (isSessionToken(token)) {
+    console.log('Using session JWT token (private API)');
+    return fetchInboxViaSessionToken(token);
+  } else if (isOAuthToken(token)) {
     console.log('Using OAuth flow');
     return fetchViaOAuth(token);
   } else {

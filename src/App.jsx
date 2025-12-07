@@ -9,12 +9,15 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [extensionId, setExtensionId] = useState(null);
+  const [workspaceId, setWorkspaceId] = useState(null);
 
-  // Handle OAuth callback - check URL for token
+  // Handle OAuth callback and extension sync - check URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get('token');
     const oauthError = urlParams.get('error');
+    const syncFromExtension = urlParams.get('sync');
 
     if (oauthToken) {
       // Save OAuth token and clear URL
@@ -24,11 +27,39 @@ function App() {
     } else if (oauthError) {
       setError(`OAuth failed: ${oauthError}`);
       window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (syncFromExtension) {
+      // Fetch synced data from backend
+      fetchSyncedData();
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
+  const fetchSyncedData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:3001/api/inbox-sync');
+      if (!response.ok) {
+        throw new Error('No synced data available');
+      }
+      const data = await response.json();
+      console.log('Loaded synced data:', data.count, 'items, extensionId:', data.extensionId);
+      setNotifications(data.notifications || []);
+      setExtensionId(data.extensionId);
+      setWorkspaceId(data.workspaceId);
+      // Set a marker that we're using synced data
+      setToken('synced');
+    } catch (err) {
+      console.error('Failed to load synced data:', err);
+      setError('No synced data. Use the Chrome extension to sync your inbox.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (token) {
+    // Don't fetch if using synced data from extension
+    if (token && token !== 'synced') {
       fetchNotifications();
     }
   }, [token]);
@@ -66,16 +97,51 @@ function App() {
   };
 
   const handleSwipe = async (id, markAsRead) => {
+    // Find the notification to get bundle_id
+    const notification = notifications.find(n => n.id === id);
+    const bundleId = notification?.bundle_id || notification?.id || id;
+
     // Optimistically remove from UI
     setNotifications(prev => prev.filter(n => n.id !== id));
 
-    if (markAsRead) {
-      // Swipe right = Mark as read (clear from inbox)
-      await markNotificationRead(token, id);
-    } else {
-      // Swipe left = Keep unread (will show again on refresh)
-      // Optionally could mark as unread to ensure it stays
-      await markNotificationUnread(token, id);
+    if (token === 'synced') {
+      // Using synced data - communicate with Chrome extension to clear in ClickUp
+      if (markAsRead && extensionId) {
+        try {
+          // Send message to extension to clear the bundle
+          const result = await new Promise((resolve) => {
+            chrome.runtime.sendMessage(
+              extensionId,
+              {
+                type: 'CLEAR_BUNDLE',
+                bundleId: bundleId,
+                workspaceId: workspaceId || '9011099466'
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error('Extension error:', chrome.runtime.lastError.message);
+                  resolve({ success: false, error: chrome.runtime.lastError.message });
+                } else {
+                  resolve(response);
+                }
+              }
+            );
+          });
+          console.log('Clear bundle result:', result);
+        } catch (err) {
+          console.error('Failed to clear notification via extension:', err);
+        }
+      } else if (markAsRead && !extensionId) {
+        console.warn('No extension ID available - cannot clear in ClickUp');
+      }
+      // Swipe left = just remove from local view, don't sync to ClickUp
+    } else if (token) {
+      // Using API token
+      if (markAsRead) {
+        await markNotificationRead(token, id);
+      } else {
+        await markNotificationUnread(token, id);
+      }
     }
   };
 
@@ -100,7 +166,7 @@ function App() {
             )}
           </div>
           <p className="text-white/40 text-sm tracking-widest uppercase">
-            {token?.startsWith('pk_') ? 'My Tasks' : 'Inbox'}
+            {token === 'synced' ? 'Synced Inbox' : token?.startsWith('pk_') ? 'My Tasks' : 'Inbox'}
           </p>
         </div>
         {token && (

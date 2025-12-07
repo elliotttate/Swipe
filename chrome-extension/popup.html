@@ -3,43 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ClickUp Token</title>
+  <title>Swipe for ClickUp</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main class="container">
+    <!-- Header -->
     <header class="header">
-      <div>
-        <h1>ClickUp Token</h1>
-        <p class="subtitle">Get your cu_jwt token for API access</p>
+      <div class="header-left">
+        <h1>Swipe</h1>
+        <span id="count-badge" class="count-badge hidden">0</span>
       </div>
-      <button id="refresh" class="btn secondary">Refresh</button>
+      <div class="header-actions">
+        <button id="refresh-btn" class="icon-btn" title="Refresh inbox">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button id="debug-btn" class="icon-btn" title="Show debug log">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </button>
+      </div>
     </header>
 
-    <section class="card">
-      <div class="card-title">
-        <div>
-          <h2>API Token (cu_jwt)</h2>
-          <p class="small">Copy this to API/config.js</p>
+    <!-- Status message -->
+    <p id="status" class="status">Click refresh to load inbox</p>
+
+    <!-- Card Stack View -->
+    <section id="card-view" class="card-view hidden">
+      <div id="card-stack" class="card-stack">
+        <!-- Cards will be inserted here -->
+      </div>
+
+      <!-- Swipe indicators -->
+      <div class="swipe-hints">
+        <div class="hint hint-left">
+          <span class="hint-icon">←</span>
+          <span>Skip</span>
         </div>
-        <button id="copy-token" class="btn primary">Copy Token</button>
+        <div class="hint hint-right">
+          <span class="hint-icon">→</span>
+          <span>Clear</span>
+        </div>
       </div>
-      <textarea id="token-value" readonly spellcheck="false" placeholder="Token will appear here..."></textarea>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button id="skip-btn" class="action-btn skip" title="Skip (swipe left)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <button id="clear-btn" class="action-btn clear" title="Clear from inbox (swipe right)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </button>
+      </div>
     </section>
 
-    <section class="card">
-      <div class="card-title">
-        <h2>Token Info</h2>
-      </div>
-      <div id="token-info" class="token-info">
-        <p class="small">Loading...</p>
-      </div>
+    <!-- Empty state -->
+    <section id="empty-state" class="empty-state hidden">
+      <div class="empty-icon">✨</div>
+      <h2>All caught up!</h2>
+      <p>Your inbox is clear.</p>
     </section>
 
-    <p id="status" class="status">Ready.</p>
+    <!-- Loading state -->
+    <section id="loading-state" class="loading-state hidden">
+      <div class="spinner"></div>
+      <p>Loading inbox...</p>
+    </section>
+
+    <!-- Debug panel -->
+    <section id="debug-panel" class="debug-panel hidden">
+      <div class="debug-header">
+        <h3>Debug Log</h3>
+        <button id="close-debug" class="icon-btn small">✕</button>
+      </div>
+      <div id="debug-log" class="debug-log"></div>
+    </section>
   </main>
 
-  <script type="module" src="popup.js"></script>
+  <script src="popup.js"></script>
 </body>
 </html>
-

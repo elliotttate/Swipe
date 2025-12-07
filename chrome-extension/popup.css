@@ -1,149 +1,490 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background: #f6f7fb;
-  min-width: 360px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  width: 360px;
+  min-height: 480px;
+  color: #e4e4e7;
 }
 
 .container {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  height: 100%;
+  min-height: 480px;
 }
 
+.hidden {
+  display: none !important;
+}
+
+/* Header */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-h2 {
-  margin: 0 0 4px 0;
+.count-badge {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e4e4e7;
+}
+
+.icon-btn.small {
+  width: 28px;
+  height: 28px;
   font-size: 14px;
 }
 
-.subtitle {
-  margin: 2px 0 0 0;
-  color: #505a6b;
-  font-size: 12px;
-}
-
-.small {
-  margin: 0;
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.btn {
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn.primary {
-  background: #4f46e5;
-  color: white;
-}
-
-.btn.secondary {
-  background: #e4e7ec;
-  color: #111827;
-}
-
-.btn.tertiary {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-textarea {
-  width: 100%;
-  min-height: 80px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px;
-  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  background: #f9fafb;
-  resize: vertical;
-}
-
-.token-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-row .label {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.info-row .value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.info-row .value.success {
-  color: #059669;
-}
-
-.info-row .value.warning {
-  color: #d97706;
-}
-
-.info-row .value.error {
-  color: #dc2626;
-}
-
+/* Status */
 .status {
-  margin: 4px 0 0 0;
-  font-size: 12px;
-  color: #374151;
+  text-align: center;
+  color: #71717a;
+  font-size: 13px;
+  margin: 8px 0;
 }
 
 .status.error {
-  color: #b91c1c;
+  color: #fca5a5;
 }
 
+.status.success {
+  color: #86efac;
+}
+
+/* Card View */
+.card-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Card Stack */
+.card-stack {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  perspective: 1000px;
+}
+
+/* Individual Card */
+.swipe-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  backface-visibility: hidden;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+.swipe-card.dragging {
+  transition: none;
+}
+
+.swipe-card.swiping-left {
+  animation: swipeLeft 0.3s ease forwards;
+}
+
+.swipe-card.swiping-right {
+  animation: swipeRight 0.3s ease forwards;
+}
+
+@keyframes swipeLeft {
+  to {
+    transform: translateX(-150%) rotate(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeRight {
+  to {
+    transform: translateX(150%) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+/* Card content */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f4f4f5;
+  line-height: 1.4;
+  flex: 1;
+  word-break: break-word;
+}
+
+.card-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #818cf8;
+  background: rgba(129, 140, 248, 0.15);
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.card-description {
+  font-size: 13px;
+  color: #a1a1aa;
+  line-height: 1.5;
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-meta-item {
+  font-size: 11px;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-meta-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Stacked cards behind - use z-index to layer properly */
+.swipe-card:first-child {
+  z-index: 3;
+  background: #1e1e2e;
+}
+
+.swipe-card:nth-child(2) {
+  transform: scale(0.95) translateY(10px);
+  pointer-events: none;
+  z-index: 2;
+  background: #252535;
+}
+
+.swipe-card:nth-child(3) {
+  transform: scale(0.9) translateY(20px);
+  pointer-events: none;
+  z-index: 1;
+  background: #2a2a3a;
+}
+
+.swipe-card:nth-child(n+4) {
+  display: none;
+}
+
+/* Swipe hints */
+.swipe-hints {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #52525b;
+}
+
+.hint-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.hint-left .hint-icon {
+  color: #f87171;
+}
+
+.hint-right .hint-icon {
+  color: #4ade80;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 8px 0;
+}
+
+.action-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.action-btn.skip {
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #f87171;
+}
+
+.action-btn.skip:hover {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+  transform: scale(1.1);
+}
+
+.action-btn.clear {
+  border-color: rgba(74, 222, 128, 0.5);
+  color: #4ade80;
+}
+
+.action-btn.clear:hover {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: #4ade80;
+  transform: scale(1.1);
+}
+
+/* Empty state */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #e4e4e7;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #71717a;
+  font-size: 14px;
+}
+
+/* Loading state */
+.loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(129, 140, 248, 0.2);
+  border-top-color: #818cf8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: #a1a1aa;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Debug panel */
+.debug-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 46, 0.98);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.debug-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #e4e4e7;
+}
+
+.debug-log {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.debug-log .log-entry {
+  margin-bottom: 4px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.debug-log .log-time {
+  color: #6366f1;
+  margin-right: 8px;
+}
+
+.debug-log .log-info {
+  color: #93c5fd;
+}
+
+.debug-log .log-success {
+  color: #86efac;
+}
+
+.debug-log .log-error {
+  color: #fca5a5;
+}
+
+.debug-log .log-warn {
+  color: #fcd34d;
+}
+
+/* Swipe overlay indicators */
+.swipe-card .swipe-overlay {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.1s;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 4px solid;
+  border-radius: 8px;
+}
+
+.swipe-card .swipe-overlay.left {
+  right: 20px;
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.swipe-card .swipe-overlay.right {
+  left: 20px;
+  color: #4ade80;
+  border-color: #4ade80;
+}
