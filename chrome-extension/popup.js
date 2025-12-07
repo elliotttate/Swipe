@@ -128,6 +128,11 @@ function createCardElement(notification, index) {
   const list = notification.list || '';
   const actorName = notification.actor_name || '';
 
+  // Debug: log actor_name for first few cards
+  if (index < 3) {
+    console.log('[Swipe] Card', index, 'actor_name:', actorName, 'type:', notification.type);
+  }
+
   // Build action text like "Jasmine Uniza assigned this task to you"
   const actionText = actorName ? getActionText(notification.type, actorName) : '';
 
@@ -452,13 +457,72 @@ async function fetchInbox() {
             }
 
             const data = JSON.parse(text);
-            // Debug: log what pagination fields exist
+            // Debug: log what pagination fields exist and all top-level keys
             console.log('[Swipe] Response pagination:', JSON.stringify(data.pagination || {}), 'nextCursor at root:', !!data.nextCursor);
+            console.log('[Swipe] Response top-level keys:', Object.keys(data));
 
             const groups = data.notificationBundleGroups || [];
             const resources = data.resources || [];
-            const memberMap = data.memberMap || {};  // User ID -> user info mapping
-            console.log('[Swipe] MemberMap keys:', Object.keys(memberMap).length, 'users loaded');
+
+            // Build user lookup - users might be array or object
+            const usersData = data.users || data.memberMap || data.members || {};
+            const memberMap = {};
+
+            // Debug: show users structure on first page
+            if (pageCount === 0) {
+              console.log('[Swipe] usersData type:', Array.isArray(usersData) ? 'array' : typeof usersData);
+              if (Array.isArray(usersData) && usersData.length > 0) {
+                console.log('[Swipe] First user sample:', JSON.stringify(usersData[0]));
+              } else if (typeof usersData === 'object') {
+                const firstKey = Object.keys(usersData)[0];
+                if (firstKey) console.log('[Swipe] First user sample (key=' + firstKey + '):', JSON.stringify(usersData[firstKey]));
+              }
+            }
+
+            // If users is an array, convert to lookup object
+            if (Array.isArray(usersData)) {
+              for (const user of usersData) {
+                const id = user.id || user.userId;
+                if (id) {
+                  memberMap[id] = user;
+                  memberMap[`clickup:user::${id}`] = user;
+                }
+              }
+            } else {
+              // It's already an object - copy entries and add clickup:user:: variants
+              for (const [key, user] of Object.entries(usersData)) {
+                memberMap[key] = user;
+                const id = user.id || user.userId || key;
+                memberMap[`clickup:user::${id}`] = user;
+              }
+            }
+            console.log('[Swipe] Users loaded:', Object.keys(memberMap).length, 'lookup entries');
+
+            // Check if user info is embedded in resources
+            if (pageCount === 0 && resources.length > 0) {
+              console.log('[Swipe] Sample resource keys:', Object.keys(resources[0]));
+              // Look for user-type resources
+              const userResources = resources.filter(r => r.type === 'user' || r.type === 'member');
+              console.log('[Swipe] User resources found:', userResources.length);
+              if (userResources.length > 0) {
+                console.log('[Swipe] Sample user resource:', JSON.stringify(userResources[0]));
+              }
+              // Show all unique resource types
+              const types = [...new Set(resources.map(r => r.type))];
+              console.log('[Swipe] Resource types:', types);
+            }
+
+            // Build a user lookup from resources if memberMap is empty
+            const userLookup = {};
+            for (const resource of resources) {
+              if (resource.type === 'user' || resource.type === 'member') {
+                const userId = resource.id || resource.entityResourceName?.split('::').pop();
+                if (userId) {
+                  userLookup[`clickup:user::${userId}`] = resource;
+                  userLookup[userId] = resource;
+                }
+              }
+            }
 
             for (const group of groups) {
               const bundles = group.notificationBundles || [];
@@ -477,10 +541,30 @@ async function fetchInbox() {
 
                 const notifType = bundle.previewNotification?.type || bundle.bundleType || '';
 
-                // Get actor info from member map
-                const actorId = bundle.previewNotification?.historyItem?.actorId;
-                const actor = actorId ? memberMap[actorId] : null;
-                const actorName = actor?.username || actor?.name || '';
+                // Get actor info - try memberMap, userLookup, and extract from ID
+                const historyItem = bundle.previewNotification?.historyItem;
+                const actorId = historyItem?.actorId || historyItem?.user || bundle.previewNotification?.actorId;
+
+                // Try to find actor in memberMap or userLookup
+                let actor = null;
+                if (actorId) {
+                  // Try direct lookup
+                  actor = memberMap[actorId] || userLookup[actorId];
+
+                  // Try extracting numeric ID from "clickup:user::75493733" format
+                  if (!actor && actorId.includes('::')) {
+                    const numericId = actorId.split('::').pop();
+                    actor = memberMap[numericId] || userLookup[numericId];
+                  }
+                }
+
+                // Debug: log first few bundles to see structure
+                if (allNotifications.length < 3) {
+                  console.log('[Swipe] actorId:', actorId, 'actor found:', !!actor);
+                  if (actor) console.log('[Swipe] actor data:', JSON.stringify(actor));
+                }
+
+                const actorName = actor?.username || actor?.name || actor?.email?.split('@')[0] || '';
 
                 // Extract string values from location objects
                 const spaceName = taskResource?.location?.project?.name || taskResource?.location?.project || '';
